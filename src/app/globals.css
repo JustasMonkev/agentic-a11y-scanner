@@ -1,0 +1,97 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #f6f7f9;
+  --foreground: #1b1f23;
+  --surface: #ffffff;
+  --surface-muted: #eef1f7;
+  --primary: #1d4ed8;
+  --primary-contrast: #ffffff;
+  --accent: #047857;
+  --accent-contrast: #ffffff;
+  --border-strong: #c0c6d4;
+  /* Severity colors for accessibility violations */
+  --severity-critical: #b91c1c;
+  --severity-serious: #c2410c;
+  --severity-moderate: #ca8a04;
+  --severity-minor: #1d4ed8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #06070b;
+    --foreground: #f5f6fa;
+    --surface: #101321;
+    --surface-muted: #1c2239;
+    --border-strong: #2d385b;
+  }
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(29, 78, 216, 0.08), transparent 45%),
+    var(--background);
+  color: var(--foreground);
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  transition: background-color 0.3s ease;
+}
+
+/* Smooth transitions for interactive elements */
+button,
+input,
+textarea,
+select {
+  transition: all 0.2s ease;
+}
+
+/* Accessibility: Focus visible styles */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+}
+
+/* Prevent layout shift for scrollbar */
+html {
+  scrollbar-gutter: stable;
+  background: var(--background);
+}
+
+/* Print styles for accessibility reports */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .no-print {
+    display: none;
+  }
+}
