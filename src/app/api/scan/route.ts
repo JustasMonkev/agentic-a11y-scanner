@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { initializeAgent } from "@/lib/agent";
 import { runMultiAgentScan } from "@/lib/multi-agent-orchestrator";
 import type { ScanRequest } from "@/lib/types";
+import { parseReportMetadata } from "@/lib/history-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +31,12 @@ export async function POST(request: NextRequest) {
     if (mode === "exploration") {
       const result = await runMultiAgentScan(url);
 
+      // Parse detailed metadata from the report
+      const parsedMetadata = parseReportMetadata(
+        result.finalReport,
+        "exploration",
+      );
+
       return NextResponse.json({
         status: "success",
         data: result.finalReport,
@@ -37,7 +44,11 @@ export async function POST(request: NextRequest) {
           multiAgent: true,
           pagesScanned: result.pageScanResults.length,
           totalViolations: result.totalViolations,
-          discoveredUrls: result.discoveryResult.discoveredUrls.length,
+          discoveredUrls: result.discoveryResult.discoveredUrls.map(
+            (u) => u.url,
+          ),
+          violationsBySeverity: parsedMetadata.violationsBySeverity,
+          wcagLevel: parsedMetadata.wcagLevel,
         },
       });
     }
@@ -73,6 +84,9 @@ Use the scan_url tool to scan this page. Analyze the results and report all viol
     const totalTime = Date.now() - startTime;
     console.log(`🏁 Total request time: ${totalTime}ms`);
 
+    // Parse detailed metadata from the report
+    const parsedMetadata = parseReportMetadata(finalOutput, "single");
+
     return NextResponse.json({
       status: "success",
       data: finalOutput,
@@ -81,6 +95,10 @@ Use the scan_url tool to scan this page. Analyze the results and report all viol
         scanTime,
         totalTime,
         multiAgent: false,
+        pagesScanned: 1,
+        totalViolations: parsedMetadata.totalViolations,
+        violationsBySeverity: parsedMetadata.violationsBySeverity,
+        wcagLevel: parsedMetadata.wcagLevel,
       },
     });
   } catch (error) {
