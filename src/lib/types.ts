@@ -12,7 +12,7 @@ export interface ScanResponseMetadata {
   multiAgent: boolean;
   pagesScanned?: number;
   totalViolations?: number;
-  discoveredUrls?: number;
+  discoveredUrls?: string[];
   /** Violations by severity (extracted from report) */
   violationsBySeverity?: {
     critical: number;

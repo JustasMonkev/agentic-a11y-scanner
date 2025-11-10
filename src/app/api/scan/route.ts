@@ -32,7 +32,10 @@ export async function POST(request: NextRequest) {
       const result = await runMultiAgentScan(url);
 
       // Parse detailed metadata from the report
-      const parsedMetadata = parseReportMetadata(result.finalReport, "exploration");
+      const parsedMetadata = parseReportMetadata(
+        result.finalReport,
+        "exploration",
+      );
 
       return NextResponse.json({
         status: "success",
@@ -41,7 +44,9 @@ export async function POST(request: NextRequest) {
           multiAgent: true,
           pagesScanned: result.pageScanResults.length,
           totalViolations: result.totalViolations,
-          discoveredUrls: result.discoveryResult.discoveredUrls.length,
+          discoveredUrls: result.discoveryResult.discoveredUrls.map(
+            (u) => u.url,
+          ),
           violationsBySeverity: parsedMetadata.violationsBySeverity,
           wcagLevel: parsedMetadata.wcagLevel,
         },

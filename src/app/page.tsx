@@ -71,19 +71,24 @@ export default function Home() {
           mode,
           data.data,
           undefined, // no label by default
-          data.metadata?.discoveredUrls
-            ? Array(data.metadata.discoveredUrls).fill("")
-            : undefined,
+          data.metadata?.discoveredUrls,
         );
 
         if (saveResult.success && saveResult.data) {
           setCurrentScanId(saveResult.data.id);
 
+          // Show warning to user if storage is near capacity
           if (saveResult.warning) {
             console.warn("Scan saved with warning:", saveResult.warning);
+            // You could show a toast notification here in the future
+            alert(`Note: ${saveResult.warning}`);
           }
         } else {
+          // Show error to user if save failed
           console.error("Failed to save scan to history:", saveResult.error);
+          alert(
+            `Warning: Scan completed but could not be saved to history: ${saveResult.error || "Unknown error"}\n\nYour results are still displayed below.`,
+          );
         }
 
         return;
@@ -93,7 +98,9 @@ export default function Home() {
       setError(data.error!);
     } catch (err) {
       setPageState("form");
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred",
+      );
     }
   };
 
@@ -149,9 +156,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 bg-gradient-to-b from-slate-100 via-white to-slate-200 dark:from-slate-950 dark:via-slate-900 dark:to-black py-16">
         <div className="max-w-6xl mx-auto px-4 lg:px-8">
-          <a
-            className="sr-only focus:not-sr-only focus:absolute focus:top-6 focus:left-6 focus:z-50 rounded-md bg-blue-700 px-4 py-2 font-semibold text-white shadow-lg transition"
-          >
+          <a className="sr-only focus:not-sr-only focus:absolute focus:top-6 focus:left-6 focus:z-50 rounded-md bg-blue-700 px-4 py-2 font-semibold text-white shadow-lg transition">
             Skip to scan form
           </a>
 
@@ -188,7 +193,7 @@ export default function Home() {
       <HistorySidebar
         onViewScan={handleViewScan}
         onCompareScan={handleCompareScan}
-        selectedScanId={currentScanId}
+        selectedScanId={currentScanId ?? undefined}
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
       />
