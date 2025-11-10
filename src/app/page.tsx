@@ -33,6 +33,10 @@ export default function Home() {
     baseline: ScanRecord | null;
     current: ScanRecord | null;
   }>({ baseline: null, current: null });
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "warning" | "error" | "info";
+  } | null>(null);
 
   const handleScan = async (url: string, mode: "single" | "exploration") => {
     setPageState("progress");
@@ -80,15 +84,22 @@ export default function Home() {
           // Show warning to user if storage is near capacity
           if (saveResult.warning) {
             console.warn("Scan saved with warning:", saveResult.warning);
-            // You could show a toast notification here in the future
-            alert(`Note: ${saveResult.warning}`);
+            setNotification({
+              message: saveResult.warning,
+              type: "warning",
+            });
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => setNotification(null), 5000);
           }
         } else {
           // Show error to user if save failed
           console.error("Failed to save scan to history:", saveResult.error);
-          alert(
-            `Warning: Scan completed but could not be saved to history: ${saveResult.error || "Unknown error"}\n\nYour results are still displayed below.`,
-          );
+          setNotification({
+            message: `Scan completed but could not be saved to history: ${saveResult.error || "Unknown error"}. Your results are still displayed below.`,
+            type: "error",
+          });
+          // Auto-dismiss after 7 seconds for errors
+          setTimeout(() => setNotification(null), 7000);
         }
 
         return;
@@ -141,7 +152,11 @@ export default function Home() {
             current: otherScans[0],
           });
         } else {
-          alert("No other scans available for comparison");
+          setNotification({
+            message: "No other scans available for comparison. Please run at least two scans to enable comparison.",
+            type: "info",
+          });
+          setTimeout(() => setNotification(null), 5000);
         }
       }
     }
@@ -167,6 +182,47 @@ export default function Home() {
                 Error
               </p>
               <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Notification Toast */}
+          {notification && (
+            <div
+              className={`max-w-2xl mx-auto mb-6 p-4 rounded-lg border animate-fade-in ${
+                notification.type === "warning"
+                  ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-900"
+                  : notification.type === "error"
+                    ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900"
+                    : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <p
+                  className={`text-sm flex-1 ${
+                    notification.type === "warning"
+                      ? "text-yellow-800 dark:text-yellow-200"
+                      : notification.type === "error"
+                        ? "text-red-800 dark:text-red-200"
+                        : "text-blue-800 dark:text-blue-200"
+                  }`}
+                >
+                  {notification.message}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setNotification(null)}
+                  className={`text-sm font-medium hover:underline ${
+                    notification.type === "warning"
+                      ? "text-yellow-700 dark:text-yellow-300"
+                      : notification.type === "error"
+                        ? "text-red-700 dark:text-red-300"
+                        : "text-blue-700 dark:text-blue-300"
+                  }`}
+                  aria-label="Dismiss notification"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
 
@@ -196,6 +252,7 @@ export default function Home() {
         selectedScanId={currentScanId ?? undefined}
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        isScanning={pageState === "progress"}
       />
 
       {/* Comparison Modal */}

@@ -11,6 +11,7 @@ interface HistorySidebarProps {
   selectedScanId?: string;
   isOpen: boolean;
   onToggle: () => void;
+  isScanning?: boolean;
 }
 
 export function HistorySidebar({
@@ -19,6 +20,7 @@ export function HistorySidebar({
   selectedScanId,
   isOpen,
   onToggle,
+  isScanning = false,
 }: HistorySidebarProps) {
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [filterUrl, setFilterUrl] = useState("");
@@ -201,7 +203,7 @@ export function HistorySidebar({
             <button
               type="button"
               onClick={handleExport}
-              disabled={scans.length === 0}
+              disabled={scans.length === 0 || isScanning}
               className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               Export
@@ -209,7 +211,7 @@ export function HistorySidebar({
             <button
               type="button"
               onClick={handleClearAll}
-              disabled={scans.length === 0}
+              disabled={scans.length === 0 || isScanning}
               className="flex-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-950 dark:text-red-200 dark:hover:bg-red-900 transition-colors"
             >
               Clear All
@@ -266,6 +268,7 @@ export function HistorySidebar({
                   onCompare={onCompareScan}
                   onDelete={handleDelete}
                   isSelected={scan.id === selectedScanId}
+                  isScanning={isScanning}
                 />
               ))}
             </div>

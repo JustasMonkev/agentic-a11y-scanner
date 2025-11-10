@@ -9,6 +9,7 @@ interface HistoryCardProps {
   onCompare: (scan: ScanRecord) => void;
   onDelete: (scanId: string) => void;
   isSelected?: boolean;
+  isScanning?: boolean;
 }
 
 export function HistoryCard({
@@ -17,23 +18,25 @@ export function HistoryCard({
   onCompare,
   onDelete,
   isSelected = false,
+  isScanning = false,
 }: HistoryCardProps) {
   const { url, timestamp, metadata, mode, label } = scan;
 
   return (
     <div
-      tabIndex={1}
-      onClick={() => onView(scan)}
+      tabIndex={isScanning ? -1 : 1}
+      onClick={() => !isScanning && onView(scan)}
       className={`
         group relative rounded-lg border p-4 transition-all
-        hover:border-blue-500 hover:shadow-md
+        ${!isScanning && "hover:border-blue-500 hover:shadow-md"}
         ${isSelected ? "border-blue-500 bg-blue-50 dark:bg-blue-950" : "border-gray-200 dark:border-gray-700"}
+        ${isScanning && "opacity-50 cursor-not-allowed"}
       `}
       style={{
-        cursor: "pointer",
+        cursor: isScanning ? "not-allowed" : "pointer",
       }}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (!isScanning && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();
           onView(scan);
         }
@@ -110,15 +113,23 @@ export function HistoryCard({
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => onCompare(scan)}
-          className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCompare(scan);
+          }}
+          disabled={isScanning}
+          className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
           Compare
         </button>
         <button
           type="button"
-          onClick={() => onDelete(scan.id)}
-          className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 dark:bg-red-950 dark:text-red-200 dark:hover:bg-red-900 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(scan.id);
+          }}
+          disabled={isScanning}
+          className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-950 dark:text-red-200 dark:hover:bg-red-900 transition-colors"
           aria-label="Delete scan"
         >
           Delete

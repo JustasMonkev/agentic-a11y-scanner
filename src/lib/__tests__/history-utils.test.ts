@@ -143,6 +143,59 @@ Meets WCAG AA compliance.
     expect(metadata.violationsBySeverity.critical).toBe(8);
     expect(metadata.totalViolations).toBe(15);
   });
+
+  it("should extract Total Violations Found from report header", () => {
+    const report = `
+# Accessibility Scan Report
+
+**Main URL:** https://example.com
+**Total Violations Found:** 47
+
+---
+
+## 🔴 Critical Issues
+### 1. Missing alt text
+- Issue details...
+
+## 🟠 Serious Issues
+### 1. Color contrast
+- Issue details...
+    `;
+
+    const metadata = parseReportMetadata(report, "exploration");
+    expect(metadata.totalViolations).toBe(47);
+  });
+
+  it("should use total violations when individual counts not available", () => {
+    const report = `
+# Accessibility Scan
+
+**Total Violations:** 25
+
+Some violations were found but details are not in expected format.
+    `;
+
+    const metadata = parseReportMetadata(report, "single");
+    expect(metadata.totalViolations).toBe(25);
+  });
+
+  it("should handle section headers with counts in parentheses", () => {
+    const report = `
+# Report
+
+## 🔴 Critical Issues (3)
+## 🟠 Serious Issues (7)
+## 🟡 Moderate Issues (2)
+## 🔵 Minor Issues (1)
+    `;
+
+    const metadata = parseReportMetadata(report, "single");
+    expect(metadata.violationsBySeverity.critical).toBe(3);
+    expect(metadata.violationsBySeverity.serious).toBe(7);
+    expect(metadata.violationsBySeverity.moderate).toBe(2);
+    expect(metadata.violationsBySeverity.minor).toBe(1);
+    expect(metadata.totalViolations).toBe(13);
+  });
 });
 
 describe("formatRelativeTime", () => {

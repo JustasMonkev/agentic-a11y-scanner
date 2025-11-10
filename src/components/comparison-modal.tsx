@@ -18,6 +18,14 @@ interface ComparisonModalProps {
   onClose: () => void;
 }
 
+// Define icons outside component to avoid recreation on each render
+const SEVERITY_ICONS = {
+  critical: "🔴",
+  serious: "🟠",
+  moderate: "🟡",
+  minor: "🔵",
+} as const;
+
 export function ComparisonModal({
   baseline,
   current,
@@ -244,12 +252,6 @@ export function ComparisonModal({
                   {(["critical", "serious", "moderate", "minor"] as const).map(
                     (severity) => {
                       const data = bySeverity[severity];
-                      const icons = {
-                        critical: "🔴",
-                        serious: "🟠",
-                        moderate: "🟡",
-                        minor: "🔵",
-                      };
 
                       return (
                         <tr
@@ -257,7 +259,7 @@ export function ComparisonModal({
                           className="border-b border-gray-100 dark:border-gray-800"
                         >
                           <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
-                            {icons[severity]}{" "}
+                            {SEVERITY_ICONS[severity]}{" "}
                             {severity.charAt(0).toUpperCase() +
                               severity.slice(1)}
                           </td>

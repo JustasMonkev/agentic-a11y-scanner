@@ -33,6 +33,26 @@ export function parseReportMetadata(
     pageCount: mode === "single" ? 1 : 0,
   };
 
+  // First, try to extract total violations directly
+  const totalPatterns = [
+    /\*\*Total Violations Found:\*\*\s*(\d+)/i,
+    /\*\*Total Violations:\*\*\s*(\d+)/i,
+    /Total Violations Found:\s*(\d+)/i,
+    /Total Violations:\s*(\d+)/i,
+  ];
+
+  let totalFromReport = 0;
+  for (const pattern of totalPatterns) {
+    const match = report.match(pattern);
+    if (match?.[1]) {
+      const count = Number.parseInt(match[1], 10);
+      if (!Number.isNaN(count)) {
+        totalFromReport = count;
+        break;
+      }
+    }
+  }
+
   // Extract violation counts by severity
   // Pattern: 🔴 Critical: N violations
   // Pattern: 🟠 Serious: N violations
@@ -44,21 +64,25 @@ export function parseReportMetadata(
       /🔴\s*Critical:?\s*(\d+)\s*violations?/gi,
       /Critical\s*Issues?:?\s*(\d+)/gi,
       /\*\*Critical\*\*:?\s*(\d+)/gi,
+      /##\s*🔴\s*Critical\s*Issues?\s*\((\d+)\)/gi,
     ],
     serious: [
       /🟠\s*Serious:?\s*(\d+)\s*violations?/gi,
       /Serious\s*Issues?:?\s*(\d+)/gi,
       /\*\*Serious\*\*:?\s*(\d+)/gi,
+      /##\s*🟠\s*Serious\s*Issues?\s*\((\d+)\)/gi,
     ],
     moderate: [
       /🟡\s*Moderate:?\s*(\d+)\s*violations?/gi,
       /Moderate\s*Issues?:?\s*(\d+)/gi,
       /\*\*Moderate\*\*:?\s*(\d+)/gi,
+      /##\s*🟡\s*Moderate\s*Issues?\s*\((\d+)\)/gi,
     ],
     minor: [
       /🔵\s*Minor:?\s*(\d+)\s*violations?/gi,
       /Minor\s*Issues?:?\s*(\d+)/gi,
       /\*\*Minor\*\*:?\s*(\d+)/gi,
+      /##\s*🔵\s*Minor\s*Issues?\s*\((\d+)\)/gi,
     ],
   };
 
@@ -79,10 +103,39 @@ export function parseReportMetadata(
     }
   }
 
-  // Calculate total violations
-  metadata.totalViolations = Object.values(
+  // If patterns don't have counts, try counting individual issues under each section
+  if (Object.values(metadata.violationsBySeverity).every((c) => c === 0)) {
+    // Count issues by looking for section headers and counting ### entries
+    const severitySections: Record<ViolationSeverity, RegExp> = {
+      critical: /##\s*🔴\s*Critical\s*Issues?([\s\S]*?)(?=##|$)/i,
+      serious: /##\s*🟠\s*Serious\s*Issues?([\s\S]*?)(?=##|$)/i,
+      moderate: /##\s*🟡\s*Moderate\s*Issues?([\s\S]*?)(?=##|$)/i,
+      minor: /##\s*🔵\s*Minor\s*Issues?([\s\S]*?)(?=##|$)/i,
+    };
+
+    for (const [severity, sectionPattern] of Object.entries(
+      severitySections,
+    )) {
+      const match = report.match(sectionPattern);
+      if (match?.[1]) {
+        const content = match[1];
+        // Count ### entries (individual issues)
+        const issueCount = (content.match(/###\s+\d+\./g) || []).length;
+        if (issueCount > 0) {
+          metadata.violationsBySeverity[severity as ViolationSeverity] =
+            issueCount;
+        }
+      }
+    }
+  }
+
+  // Calculate total violations from severity breakdown
+  const calculatedTotal = Object.values(
     metadata.violationsBySeverity,
   ).reduce((sum, count) => sum + count, 0);
+
+  // Use the explicitly stated total if available and greater, otherwise use calculated
+  metadata.totalViolations = Math.max(totalFromReport, calculatedTotal);
 
   // Try to extract page count for exploration mode
   if (mode === "exploration") {
@@ -253,20 +306,6 @@ export function truncateUrl(url: string, maxLength = 50): string {
 export function estimateObjectSize(obj: unknown): number {
   // Each character is approximately 2 bytes in UTF-16
   return JSON.stringify(obj).length * 2;
-}
-
-/**
- * Validates if a string is a valid ISO 8601 timestamp
- * @param timestamp Timestamp to validate
- * @returns True if valid, false otherwise
- */
-export function isValidTimestamp(timestamp: string): boolean {
-  try {
-    const date = new Date(timestamp);
-    return !Number.isNaN(date.getTime()) && timestamp === date.toISOString();
-  } catch {
-    return false;
-  }
 }
 
 /**
